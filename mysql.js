@@ -32,12 +32,15 @@ MysqlAdapter.prototype.upsert = function (properties, cb) {
   var values = keys.map(function (k) {
     return properties[k];
   });
+  this.knex.raw('START TRANSACTION; SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; ')
   var sql = 'REPLACE INTO ' + this.tableName +
     ' (' + keys.map(function (key) { return '`' + key + '`'; }).join(',') +
-    ') VALUES (' + values.map(function (x) { return '?'; }).join(',') + ')';
+    ') VALUES (' + values.map(function (x) { return '?'; }).join(',') + ');';
+  // console.log(sql)
   this.knex.raw(sql, values)
     .then(function () { cb(); })
-    .error(cb);
+    .error(function(err) { console.log(err); cb(); });
+    this.knex.raw('COMMIT;')
 };
 
 MysqlAdapter.prototype.close = function (cb) {
